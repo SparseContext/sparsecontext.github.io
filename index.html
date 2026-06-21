@@ -215,7 +215,7 @@
 
     /* ── STATS ── */
     .stats-row {
-      display: grid; grid-template-columns: repeat(4,1fr);
+      display: grid; grid-template-columns: repeat(2,1fr);
       gap: 24px; margin: 2.5rem 0;
       padding-top: 2rem; border-top: 1px solid var(--border2);
     }
@@ -497,24 +497,6 @@
           random token dropping at varying ratios — making it agnostic to <em>which</em> tokens are selected, enabling
           flexible <strong>task-aware token selection</strong> at inference without any additional training.
         </p>
-        <div class="stats-row">
-          <div class="stat">
-            <div class="stat-val">4<span class="u">×</span></div>
-            <div class="stat-lbl">speedup · multi-reference generation</div>
-          </div>
-          <div class="stat">
-            <div class="stat-val">2<span class="u">×</span></div>
-            <div class="stat-lbl">speedup · single-reference generation</div>
-          </div>
-          <div class="stat">
-            <div class="stat-val">6.7<span class="u">×</span></div>
-            <div class="stat-lbl">combined with KV-cache at n = 6</div>
-          </div>
-          <div class="stat">
-            <div class="stat-val">90<span class="u">%</span></div>
-            <div class="stat-lbl">tokens droppable while preserving layout</div>
-          </div>
-        </div>
       </div>
     </section>
 
