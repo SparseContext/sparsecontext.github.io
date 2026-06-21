@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keep The Essentials — Sparse Context</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── TOKENS — OneCanvas gold theme ── */
+    :root {
+      --bg:          #fffdf8;
+      --bg2:         #f7f2e9;
+      --surface:     #ffffff;
+      --border:      #e8d9a8;
+      --border2:     #f0e7cc;
+      --text:        #0a0a0d;
+      --text2:       #4a3f28;
+      --text3:       #8a7a56;
+      --accent:      #c8901a;
+      --accent2:     #8a6510;
+      --accent-soft: rgba(200,144,26,.10);
+      --accent-line: rgba(200,144,26,.30);
+      --shadow-sm:   0 1px 2px rgba(17,10,0,.05), 0 2px 8px rgba(17,10,0,.06);
+      --shadow-md:   0 4px 14px rgba(17,10,0,.08), 0 16px 44px rgba(17,10,0,.07);
+      --nav-h:       64px;
+      --radius:      14px;
+      --radius-sm:   8px;
+      --t:           .18s ease;
+    }
+    [data-theme="dark"] {
+      --bg:          #0a0a0d;
+      --bg2:         #121008;
+      --surface:     #1a1710;
+      --border:      rgba(186,147,64,.28);
+      --border2:     rgba(186,147,64,.14);
+      --text:        #f5f0e6;
+      --text2:       #c8b98a;
+      --text3:       #8a7a56;
+      --accent:      #e8b84a;
+      --accent2:     #ecbd54;
+      --accent-soft: rgba(232,184,74,.14);
+      --accent-line: rgba(232,184,74,.38);
+      --shadow-sm:   0 1px 2px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.35);
+      --shadow-md:   0 4px 14px rgba(0,0,0,.5), 0 16px 44px rgba(0,0,0,.45);
+    }
+
+    /* ── RESET ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: calc(var(--nav-h) + 16px); }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background:
+        radial-gradient(120% 60% at 50% -4%, rgba(232,184,74,.09) 0%, rgba(232,184,74,0) 65%),
+        var(--bg);
+      color: var(--text);
+      font-size: 17px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      transition: background .25s ease, color .25s ease;
+      overflow-x: hidden;
+    }
+    img { display: block; max-width: 100%; height: auto; }
+    a { color: var(--accent); text-decoration: none; transition: color .15s; }
+    a:hover { color: var(--accent2); }
+    strong, b { color: var(--text); font-weight: 600; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      z-index: 100;
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      backdrop-filter: saturate(180%) blur(14px);
+      -webkit-backdrop-filter: saturate(180%) blur(14px);
+      border-bottom: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; gap: 16px;
+    }
+    .nav-logo {
+      display: inline-flex; align-items: center; gap: 10px;
+      color: var(--text); font-weight: 600; font-size: 15px; text-decoration: none;
+    }
+    .nav-logo:hover { text-decoration: none; color: var(--text); }
+    .brand-mark {
+      width: 14px; height: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 4px;
+      box-shadow: 0 0 0 4px var(--accent-soft);
+      flex-shrink: 0;
+    }
+    .nav-links { display: flex; gap: 2px; list-style: none; }
+    .nav-links a {
+      font-size: 13px; font-weight: 500; letter-spacing: .04em;
+      color: var(--text2); text-decoration: none;
+      padding: 7px 13px; border-radius: 999px;
+      transition: color .15s, background .15s;
+    }
+    .nav-links a:hover { color: var(--accent); background: var(--accent-soft); }
+    .nav-links a.active { color: var(--accent); background: var(--accent-soft); }
+    .theme-btn {
+      width: 38px; height: 38px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: color .15s, border-color .15s, transform .15s;
+      flex-shrink: 0;
+    }
+    .theme-btn:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-1px); }
+    .ico-moon { display: none; }
+    [data-theme="dark"] .ico-sun  { display: none; }
+    [data-theme="dark"] .ico-moon { display: block; }
+
+    /* ── HERO ── */
+    #hero {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: calc(var(--nav-h) + 64px) 28px 56px;
+      text-align: center;
+    }
+    .venue-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-line);
+      padding: 6px 16px; border-radius: 999px;
+      margin-bottom: 28px;
+    }
+    .venue-dot {
+      width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+
+    h1 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(2.4rem, 5.5vw, 4rem);
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -.02em;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+    h1 em {
+      font-style: normal;
+      background: linear-gradient(180deg, #e8b84a 0%, #b8860b 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 19px);
+      color: var(--text2);
+      max-width: 680px;
+      margin: 0 auto 28px;
+      line-height: 1.5;
+    }
+    .hero-authors { margin-bottom: 28px; text-align: center; }
+    .authors-line {
+      font-size: 16px; color: var(--text); line-height: 2; text-align: center;
+    }
+    .author {
+      color: var(--text); font-weight: 500; white-space: nowrap;
+      border-bottom: 1px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    .author:hover { color: var(--accent); border-bottom-color: var(--accent-line); }
+    .sep { color: var(--text3); margin: 0 4px; }
+    .hero-tldr {
+      display: inline-flex; align-items: baseline; gap: 10px;
+      max-width: 680px; margin: 0 auto 28px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-line);
+      border-radius: 10px;
+      padding: 10px 16px;
+      text-align: left;
+    }
+    .tldr-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--accent); white-space: nowrap; flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .tldr-text { font-size: 14px; color: var(--text2); line-height: 1.55; }
+    .tldr-text strong { color: var(--text); }
+    .hero-btns {
+      display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 24px;
+      font-size: 14px; font-weight: 500; letter-spacing: .01em;
+      border-radius: 999px; cursor: pointer; text-decoration: none;
+      transition: all .2s ease; border: 1.5px solid transparent;
+      font-family: inherit;
+    }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover {
+      background: var(--accent2); border-color: var(--accent2);
+      transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-soft);
+      color: #fff; text-decoration: none;
+    }
+    .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-1px); text-decoration: none; }
+
+    /* ── STATS ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 24px; margin: 2.5rem 0;
+      padding-top: 2rem; border-top: 1px solid var(--border2);
+    }
+    .stat { text-align: left; }
+    .stat-val {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-weight: 700; line-height: 1; letter-spacing: -.02em;
+      color: var(--text);
+    }
+    .stat-val .u { color: var(--accent); font-weight: 500; margin-left: 2px; }
+    .stat-lbl { margin-top: 8px; font-size: 14px; color: var(--text2); line-height: 1.4; }
+
+    /* ── MAIN / BANDS ── */
+    main { overflow: hidden; }
+    section {
+      padding: 80px 0;
+      scroll-margin-top: var(--nav-h);
+    }
+    section.band-soft {
+      background: var(--bg2);
+      border-top: 1px solid var(--border2);
+      border-bottom: 1px solid var(--border2);
+    }
+    .container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+    /* ── SECTION HEADER (band-head) ── */
+    .band-head { text-align: center; margin-bottom: 52px; }
+    .kicker {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--accent); background: var(--accent-soft);
+      padding: 5px 14px; border-radius: 999px;
+      margin-bottom: 16px; font-weight: 600;
+    }
+    .band-title {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 600;
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
+      line-height: 1.08; letter-spacing: -.018em;
+      color: var(--text); margin-bottom: 16px;
+    }
+    .title-em { color: var(--accent); }
+    .band-lede {
+      font-size: 18px; line-height: 1.6; color: var(--text2);
+      max-width: 740px; margin: 0 auto;
+    }
+    .band-lede em { color: var(--text); font-style: normal; font-weight: 500; }
+
+    /* Sub-section header */
+    .sub-head { text-align: center; margin: 48px 0 24px; }
+    .sub-kicker {
+      display: inline-block;
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 1.35rem; letter-spacing: -.01em; text-transform: none;
+      color: var(--accent2);
+      font-weight: 600;
+    }
+
+    h3 { font-size: 1.1rem; font-weight: 600; color: var(--text); margin: 1.5rem 0 .5rem; }
+    p { font-size: 1.06rem; color: var(--text2); margin-bottom: .85rem; text-align: justify; line-height: 1.7; }
+    strong { color: var(--text); font-weight: 600; }
+
+    /* ── FIGURES (popout) ── */
+    .fig-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease, border-color .25s;
+    }
+    .fig-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent-line);
+    }
+    .fig-card img { width: 100%; border-radius: var(--radius-sm); display: block; }
+    .fig-cap {
+      font-size: .9rem; color: var(--text2);
+      padding: .75rem .5rem .25rem;
+      line-height: 1.55; text-align: left;
+    }
+    .fig-cap strong { color: var(--accent); }
+
+    /* ── INSIGHT BOX ── */
+    .insight {
+      display: flex; gap: 1rem; align-items: flex-start;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-line);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.25rem; margin: 1.5rem 0;
+    }
+    .insight-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; margin-top: .15rem; }
+    .insight p { margin: 0; font-size: 1rem; color: var(--text); text-align: left; }
+
+    /* ── TASK CARDS ── */
+    .task-list { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin: 1rem 0; }
+    .task-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 1.1rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .task-item h4 { font-size: .95rem; font-weight: 600; color: var(--text); margin-bottom: .3rem; }
+    .task-item p  { font-size: .97rem; margin: 0; color: var(--text2); text-align: left; }
+
+    /* ── BIBTEX ── */
+    .bib-wrap {
+      position: relative;
+      background: #1e1e1e;
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      box-shadow: 0 10px 30px -16px rgba(17,24,39,.45);
+      border: 1.5px solid #2e2a20;
+    }
+    .bib-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; line-height: 1.65; margin: 0;
+      padding-right: 70px; white-space: pre-wrap; word-break: break-word;
+      background: none; border: none; color: #f5f5f5;
+    }
+    .copy-btn {
+      position: absolute; top: 16px; right: 16px;
+      background: rgba(232,184,74,.15); border: 1px solid rgba(232,184,74,.35);
+      color: #e8b84a; font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+      padding: 6px 11px; border-radius: 6px; cursor: pointer;
+      transition: all .15s;
+    }
+    .copy-btn:hover { background: #e8b84a; border-color: #e8b84a; color: #1e1e1e; }
+
+    /* ── CAROUSEL ── */
+    .carousel { position: relative; margin-bottom: 1.5rem; }
+    .carousel-track-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .carousel-track { display: flex; transition: transform .35s ease; }
+    .carousel-track img { flex: 0 0 100%; width: 100%; height: auto; display: block; }
+    .carousel-cap {
+      font-size: .9rem; color: var(--text2);
+      padding: .75rem 1rem; border-top: 1px solid var(--border2);
+      line-height: 1.55; text-align: left;
+    }
+    .carousel-cap strong { color: var(--accent); }
+    .carousel-controls {
+      display: flex; align-items: center; justify-content: center;
+      gap: 1rem; margin-top: .75rem;
+    }
+    .carousel-btn {
+      appearance: none; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 999px; width: 36px; height: 36px; cursor: pointer;
+      font-size: 1rem; color: var(--text2);
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s, color .15s, transform .15s;
+      flex-shrink: 0;
+    }
+    .carousel-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+    .carousel-btn:disabled { opacity: .3; cursor: default; transform: none; }
+    .carousel-dots { display: flex; gap: .4rem; }
+    .carousel-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--border); cursor: pointer;
+      transition: background .15s, transform .15s;
+      border: none; padding: 0;
+    }
+    .carousel-dot.active { background: var(--accent); transform: scale(1.35); }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 40px 28px 56px;
+      border-top: 1px solid var(--border2);
+      background: var(--surface);
+      text-align: center;
+    }
+    .foot-title {
+      font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500;
+      color: var(--text); margin-bottom: 4px; letter-spacing: -.005em;
+    }
+    .foot-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--accent); font-weight: 600;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 980px) { .nav-links { display: none; } }
+    @media (max-width: 700px) {
+      .stats-row { grid-template-columns: repeat(2,1fr); }
+      .task-list { grid-template-columns: 1fr; }
+      h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#hero">
+      <span class="brand-mark"></span>
+      Sparse Context
+    </a>
+    <ul class="nav-links">
+      <li><a href="#abstract">Abstract</a></li>
+      <li><a href="#redundancy">Motivation</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#integration">Integration</a></li>
+      <li><a href="#bibtex">BibTeX</a></li>
+    </ul>
+    <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">
+      <svg class="ico ico-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="ico ico-moon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </nav>
+
+  <!-- HERO -->
+  <div id="hero">
+    <h1>
+      Keep The Essentials:<br>
+      Efficient Reference Conditioned<br>Generation via <em>Token Dropping</em>
+    </h1>
+
+    <div class="hero-authors">
+      <p class="authors-line">
+        <a class="author" href="#">Rishubh&nbsp;Parihar</a><span class="sep">,</span>
+        <a class="author" href="#">Ayush&nbsp;Raina</a><span class="sep">,</span>
+        <a class="author" href="#">R.&nbsp;Venkatesh&nbsp;Babu</a><span class="sep">,</span>
+        <a class="author" href="#">Or&nbsp;Patashnik</a>
+      </p>
+    </div>
+
+    <div class="hero-tldr">
+      <span class="tldr-label">TL;DR</span>
+      <span class="tldr-text"><strong>Sparse Context</strong> replaces dense spatial reference grids with a small set of task-aware sampled tokens, achieving significant memory and latency reduction while preserving generation quality.</span>
+    </div>
+
+    <div class="hero-btns">
+      <a href="neurips_2026.pdf" class="btn btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+        Paper
+      </a>
+      <a href="#" class="btn btn-ghost">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Code <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;background:rgba(0,0,0,.07);padding:2px 7px;border-radius:999px;margin-left:3px;">soon</span>
+      </a>
+    </div>
+
+
+    <div class="fig-card">
+      <img src="figs/fig1a-teaser-motivation.pdf.png" alt="Sparse Context teaser">
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- ABSTRACT -->
+    <section id="abstract">
+      <div class="container">
+        <div class="band-head">
+          <span class="kicker">Abstract</span>
+          <h2 class="band-title">Efficient generation via <span class="title-em">sparse reference tokens.</span></h2>
+        </div>
+        <p style="max-width:820px;margin:0 auto 1rem;text-align:center;">
+          Reference-based diffusion models enable highly controllable image generation by leveraging elements from
+          input images to guide prompt-driven synthesis. However, these models are computationally expensive at
+          runtime, and their cost scales severely with the number of input references. While efficiency has been
+          extensively studied for prompt-driven generation, it remains largely under-explored for reference-based models.
+          The dense representation of references as full spatial token grids is the primary source of this cost.
+          We present <strong>Sparse Context</strong>, a method that constructs sparse reference representations
+          by retaining only a small subset of tokens. Even without any retraining, dropping 80% of reference tokens
+          largely preserves the coarse layout of generated scenes. To close the quality gap, we fine-tune the model with
+          random token dropping at varying ratios — making it agnostic to <em>which</em> tokens are selected, enabling
+          flexible <strong>task-aware token selection</strong> at inference without any additional training.
+        </p>
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-val">4<span class="u">×</span></div>
+            <div class="stat-lbl">speedup · multi-reference generation</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val">2<span class="u">×</span></div>
+            <div class="stat-lbl">speedup · single-reference generation</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val">6.7<span class="u">×</span></div>
+            <div class="stat-lbl">combined with KV-cache at n = 6</div>
+          </div>
+          <div class="stat">
+            <div class="stat-val">90<span class="u">%</span></div>
+            <div class="stat-lbl">tokens droppable while preserving layout</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REDUNDANCY / MOTIVATION -->
+    <section id="redundancy" class="band-soft">
+      <div class="container">
+        <div class="band-head">
+          <h2 class="band-title">Most reference tokens are <span class="title-em">redundant.</span></h2>
+          <p class="band-lede">
+            Self-attention scales quadratically with token count — a severe bottleneck as references grow.
+            But how many tokens do we actually need?
+          </p>
+        </div>
+
+        <p>
+          State-of-the-art reference-conditioned diffusion models tokenize each reference image via a VAE encoder,
+          producing a dense spatial grid concatenated with noisy target tokens. In a simple inference-time experiment
+          where we randomly drop a large fraction of reference tokens, even dropping 90% of the tokens the coarse
+          image structure is still preserved — with changes only in the finer details.
+        </p>
+
+        <div class="insight">
+          <div class="insight-icon">💡</div>
+          <p>Even dropping <strong>90% of reference tokens</strong> at inference time still preserves the coarse scene layout — confirming that the vast majority of reference tokens carry redundant information.</p>
+        </div>
+
+        <div class="fig-card">
+          <img src="figs/fig3-motivation.pdf.png" alt="Redundancy in reference tokens">
+        </div>
+      </div>
+    </section>
+
+    <!-- METHOD -->
+    <section id="method">
+      <div class="container">
+        <div class="band-head">
+          <h2 class="band-title">Train sparse. <span class="title-em">Infer smart.</span></h2>
+          <p class="band-lede">Two stages: lightweight post-training with stochastic token dropping, then flexible task-aware token selection at inference.</p>
+        </div>
+
+        <div class="sub-head"><span class="sub-kicker">Post Training with Stochastic Token Dropping</span></div>
+        <p>
+          We adapt pretrained reference-conditioned image generators to accept a variable number of reference input tokens.
+          Starting from FLUX-2-Klein-9B, we fine-tune with LoRA on a curated 63K-image dataset covering
+          <strong>single-reference image editing</strong>, <strong>single-reference personalization</strong>, and
+          <strong>multi-reference personalization</strong>. During training, we randomly drop
+          <em>f ∈ (0.75, 0.95)</em> of the reference tokens, making the model robust across all sparsity levels
+          without committing to any fixed budget at training time.
+        </p>
+        <div class="fig-card" style="max-width:75%;margin:0 auto 2rem;">
+          <img src="figs/fig2-method-training.pdf.png" alt="Sparse Context training">
+          <div class="fig-cap">
+            <strong>Fig. 2 — Training.</strong> Reference tokens are randomly dropped with keep fraction
+            f ∈ (0.05, 0.25) before concatenation with noisy target tokens.
+          </div>
+        </div>
+
+        <div class="sub-head"><span class="sub-kicker">Inference with Task-Aware Token Selection</span></div>
+        <p>
+          At inference, we encode the reference image(s) and select a subset of tokens as input to the generator.
+          Because training was agnostic to <em>which</em> tokens are selected, any task-specific selection strategy
+          plugs in without retraining. For <strong>instruction-driven image editing</strong> we use a Canny edge map
+          to oversample tokens from structural boundaries; for <strong>subject personalization</strong> we use an
+          image saliency map to concentrate the budget on identity-critical regions.
+        </p>
+        <div class="fig-card">
+          <img src="figs/fig2-inference-task-based-token-dropping.pdf.png" alt="Task-based token dropping at inference">
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="results" class="band-soft">
+      <div class="container">
+        <div class="band-head">
+          <h2 class="band-title">High fidelity across <span class="title-em">every</span> task.</h2>
+          <p class="band-lede">
+            Evaluated on instruction-driven image editing and reference-based personalization
+            using FLUX-2-Klein-9B base and distilled models.
+          </p>
+        </div>
+
+        <div class="sub-head"><span class="sub-kicker">Instruction-Driven Image Editing</span></div>
+        <p>
+          Sparse Context preserves scene structure with only <strong>10% of reference tokens</strong> while
+          accurately applying instruction-driven edits. The Naïve baseline at the same budget corrupts scene identity.
+        </p>
+        <div class="carousel" id="editingCarousel">
+          <div class="carousel-track-wrap">
+            <div class="carousel-track" id="editingTrack">
+              <img src="figs/fig7a-editing-result.pdf.png" alt="Editing result A">
+              <img src="figs/fig7b-editing-result.pdf.png" alt="Editing result B">
+              <img src="figs/fig7c-editing-result.pdf.png" alt="Editing result C">
+              <img src="figs/fig7d-editing-result.pdf.png" alt="Editing result D">
+            </div>
+          </div>
+          <div class="carousel-controls">
+            <button class="carousel-btn" id="editingPrev" aria-label="Previous">&#8592;</button>
+            <div class="carousel-dots" id="editingDots"></div>
+            <button class="carousel-btn" id="editingNext" aria-label="Next">&#8594;</button>
+          </div>
+        </div>
+
+        <div class="sub-head"><span class="sub-kicker">Personalization</span></div>
+        <p>
+          Saliency-guided sampling preserves fine-grained subject details — painting textures, jewels, vehicle
+          outlines — even at 10% token retention, while integrating subjects naturally into new scenes.
+        </p>
+        <div class="carousel" id="personCarousel">
+          <div class="carousel-track-wrap">
+            <div class="carousel-track" id="personTrack">
+              <img src="figs/fig8a-personalization-result.pdf.png" alt="Personalization result A">
+              <img src="figs/fig8b-personalization-result.pdf.png" alt="Personalization result B">
+              <img src="figs/fig8c-personalization-result.pdf.png" alt="Personalization result C">
+              <img src="figs/fig8d-personalization-result.pdf.png" alt="Personalization result D">
+            </div>
+          </div>
+          <div class="carousel-controls">
+            <button class="carousel-btn" id="personPrev" aria-label="Previous">&#8592;</button>
+            <div class="carousel-dots" id="personDots"></div>
+            <button class="carousel-btn" id="personNext" aria-label="Next">&#8594;</button>
+          </div>
+        </div>
+
+        <div class="sub-head"><span class="sub-kicker">Multi-Reference Generation</span></div>
+        <p>
+          With 6 references, 86% of tokens are from reference images — making sparse conditioning especially
+          effective. Efficiency gains scale directly with the number of references.
+        </p>
+        <div class="carousel" id="multirefCarousel">
+          <div class="carousel-track-wrap">
+            <div class="carousel-track" id="multirefTrack">
+              <img src="figs/fig9a-multi-reference-personalization.pdf.png" alt="Multi-reference result A">
+              <img src="figs/fig9b-multi-reference-personalization.pdf.png" alt="Multi-reference result B">
+              <img src="figs/fig9c-multi-reference-personalization.pdf.png" alt="Multi-reference result C">
+              <img src="figs/fig9d-multi-reference-personalization.pdf.png" alt="Multi-reference result D">
+            </div>
+          </div>
+          <div class="carousel-controls">
+            <button class="carousel-btn" id="multirefPrev" aria-label="Previous">&#8592;</button>
+            <div class="carousel-dots" id="multirefDots"></div>
+            <button class="carousel-btn" id="multirefNext" aria-label="Next">&#8594;</button>
+          </div>
+        </div>
+
+        <div class="sub-head"><span class="sub-kicker">Efficiency</span></div>
+        <div class="fig-card">
+          <img src="figs/fig6-efficiency-plots.pdf.png" alt="Efficiency speedup plots">
+          <div class="fig-cap">
+            <strong>Fig. 4 — Speedup scaling.</strong> Speedup vs. number of reference images. At n = 6 with f = 0.05–0.10,
+            Sparse Context delivers <strong>&gt; 4× wall-clock speedup</strong>.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTEGRATION -->
+    <section id="integration">
+      <div class="container">
+        <div class="band-head">
+          <h2 class="band-title">Compatible with other <span class="title-em">efficiency methods.</span></h2>
+          <p class="band-lede">
+            Sparse Context targets a complementary bottleneck — reducing token count per layer — while KV-caching
+            reduces redundant computation across timesteps. The two methods are orthogonal and compose additively.
+          </p>
+        </div>
+
+        <div class="sub-head"><span class="sub-kicker">Integration with KV-Cache</span></div>
+        <p>
+          KV-caching reuses key-value pairs across denoising timesteps while Sparse Context reduces the reference
+          token count itself. Combined, they reach <strong>6.72× total speedup</strong> with 6 references at
+          f = 0.10 — gains neither method achieves alone.
+        </p>
+        <div class="fig-card">
+          <img src="figs/fig7-integration-kv-cache.pdf.png" alt="KV-cache integration">
+          <div class="fig-cap">
+            <strong>Fig. 5 — Sparse Context + KV-cache.</strong> Combined speedup reaches 6.72× at n = 6 references,
+            demonstrating that the two methods compose additively.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BIBTEX -->
+    <section id="bibtex" class="band-soft">
+      <div class="container" style="max-width:820px;">
+        <div class="band-head">
+          <span class="kicker">BibTeX</span>
+          <h2 class="band-title">Cite this work.</h2>
+        </div>
+        <div class="bib-wrap">
+          <pre class="bib-code" id="bibEntry">@inproceedings{sparsecontext2026,
+  title     = {Keep The Essentials: Efficient Reference Conditioned
+               Generation via Token Dropping},
+  author    = {Parihar, Rishubh and Raina, Ayush and
+               Babu, R. Venkatesh and Patashnik, Or},
+  year      = {2026},
+  note      = {Under Review},
+}</pre>
+          <button class="copy-btn" onclick="copyBib(this)">Copy</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="foot-title">Sparse Context</div>
+    <div class="foot-sub">Efficient Reference Conditioned Generation · 2026</div>
+  </footer>
+
+  <script>
+    const btn  = document.getElementById('themeBtn');
+    const root = document.documentElement;
+    const saved = localStorage.getItem('sc-theme') || 'light';
+    root.setAttribute('data-theme', saved);
+
+    btn.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem('sc-theme', next);
+    });
+
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting)
+          document.querySelectorAll('.nav-links a').forEach(l =>
+            l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+      });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+
+    document.querySelectorAll('section[id]').forEach(s => io.observe(s));
+
+    function makeCarousel(trackId, prevId, nextId, dotsId) {
+      const track = document.getElementById(trackId);
+      const slides = track.querySelectorAll('img');
+      const prev = document.getElementById(prevId);
+      const next = document.getElementById(nextId);
+      const dotsWrap = document.getElementById(dotsId);
+      let current = 0;
+
+      slides.forEach((_, i) => {
+        const d = document.createElement('button');
+        d.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        d.setAttribute('aria-label', 'Slide ' + (i + 1));
+        d.addEventListener('click', () => go(i));
+        dotsWrap.appendChild(d);
+      });
+
+      function go(n) {
+        current = Math.max(0, Math.min(n, slides.length - 1));
+        track.style.transform = `translateX(-${current * 100}%)`;
+        dotsWrap.querySelectorAll('.carousel-dot').forEach((d, i) =>
+          d.classList.toggle('active', i === current));
+        prev.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+      }
+
+      prev.addEventListener('click', () => go(current - 1));
+      next.addEventListener('click', () => go(current + 1));
+      go(0);
+    }
+
+    makeCarousel('editingTrack', 'editingPrev', 'editingNext', 'editingDots');
+    makeCarousel('personTrack', 'personPrev', 'personNext', 'personDots');
+    makeCarousel('multirefTrack', 'multirefPrev', 'multirefNext', 'multirefDots');
+
+    function copyBib(el) {
+      navigator.clipboard.writeText(document.getElementById('bibEntry').textContent)
+        .then(() => { el.textContent = '✓ Copied'; setTimeout(() => el.textContent = 'Copy', 2000); })
+        .catch(() => { el.textContent = 'Failed';  setTimeout(() => el.textContent = 'Copy', 2000); });
+    }
+  </script>
+
+</body>
+</html>
