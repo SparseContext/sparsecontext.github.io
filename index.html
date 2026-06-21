@@ -119,12 +119,27 @@
     [data-theme="dark"] .ico-moon { display: block; }
 
     /* ── HERO ── */
+    #hero-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    #tokenCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.45;
+    }
     #hero {
       max-width: 1100px;
       margin: 0 auto;
       padding: calc(var(--nav-h) + 64px) 28px 56px;
       text-align: center;
+      position: relative;
+      z-index: 1;
     }
+    .hero-content { position: relative; z-index: 1; }
     .venue-pill {
       display: inline-flex; align-items: center; gap: 8px;
       font-family: 'JetBrains Mono', monospace;
@@ -186,7 +201,7 @@
     }
     .tldr-label {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+      font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
       color: var(--accent); white-space: nowrap; flex-shrink: 0;
       padding-top: 2px;
     }
@@ -271,7 +286,7 @@
     .sub-kicker {
       display: inline-block;
       font-family: 'Fraunces', Georgia, serif;
-      font-size: 1.35rem; letter-spacing: -.01em; text-transform: none;
+      font-size: 1.75rem; letter-spacing: -.01em; text-transform: none;
       color: var(--accent2);
       font-weight: 600;
     }
@@ -438,7 +453,10 @@
   </nav>
 
   <!-- HERO -->
+  <div id="hero-wrap">
+    <canvas id="tokenCanvas"></canvas>
   <div id="hero">
+    <div class="hero-content">
     <h1>
       Keep The Essentials:<br>
       Efficient Reference Conditioned<br>Generation via <em>Token Dropping</em>
@@ -455,7 +473,7 @@
 
     <div class="hero-tldr">
       <span class="tldr-label">TL;DR</span>
-      <span class="tldr-text"><strong>Sparse Context</strong> replaces dense spatial reference grids with a small set of task-aware sampled tokens, achieving significant memory and latency reduction while preserving generation quality.</span>
+      <span class="tldr-text"><strong>Sparse Context</strong> replaces dense spatial reference grids with a small set of sampled tokens, achieving significant latency reduction for reference conditioned image generation while preserving generation quality.</span>
     </div>
 
     <div class="hero-btns">
@@ -473,7 +491,9 @@
     <div class="fig-card">
       <img src="figs/fig1a-teaser-motivation.pdf.png" alt="Sparse Context teaser">
     </div>
-  </div>
+    </div><!-- /.hero-content -->
+  </div><!-- /#hero -->
+  </div><!-- /#hero-wrap -->
 
   <!-- MAIN -->
   <main>
@@ -533,8 +553,7 @@
     <section id="method">
       <div class="container">
         <div class="band-head">
-          <h2 class="band-title">Train sparse. <span class="title-em">Infer smart.</span></h2>
-          <p class="band-lede">Two stages: lightweight post-training with stochastic token dropping, then flexible task-aware token selection at inference.</p>
+          <h2 class="band-title">Efficient generation with <span class="title-em">sparse tokens</span></h2>
         </div>
 
         <div class="sub-head"><span class="sub-kicker">Post Training with Stochastic Token Dropping</span></div>
@@ -572,11 +591,7 @@
     <section id="results" class="band-soft">
       <div class="container">
         <div class="band-head">
-          <h2 class="band-title">High fidelity across <span class="title-em">every</span> task.</h2>
-          <p class="band-lede">
-            Evaluated on instruction-driven image editing and reference-based personalization
-            using FLUX-2-Klein-9B base and distilled models.
-          </p>
+          <h2 class="band-title">Efficient reference conditioned generation</h2>
         </div>
 
         <div class="sub-head"><span class="sub-kicker">Instruction-Driven Image Editing</span></div>
@@ -673,8 +688,6 @@
         <div class="fig-card">
           <img src="figs/fig7-integration-kv-cache.pdf.png" alt="KV-cache integration">
           <div class="fig-cap">
-            <strong>Fig. 5 — Sparse Context + KV-cache.</strong> Combined speedup reaches 6.72× at n = 6 references,
-            demonstrating that the two methods compose additively.
           </div>
         </div>
       </div>
@@ -707,6 +720,140 @@
     <div class="foot-title">Sparse Context</div>
     <div class="foot-sub">Efficient Reference Conditioned Generation · 2026</div>
   </footer>
+
+  <script>
+  /* ── TOKEN DROP ANIMATION ── */
+  (function () {
+    const canvas = document.getElementById('tokenCanvas');
+    const ctx = canvas.getContext('2d');
+    const CELL = 13, GAP = 5, STEP = CELL + GAP;
+    const KEEP_RATIO = 0.11;
+    let cols, rows, tokens = [], phase = 'fading-in', timer = 0, pulseT = 0, dpr = 1;
+
+    function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+
+    function resize() {
+      dpr = window.devicePixelRatio || 1;
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      build(w, h);
+    }
+
+    function build(w, h) {
+      cols = Math.ceil(w / STEP) + 1;
+      rows = Math.ceil(h / STEP) + 1;
+      tokens = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          tokens.push({ c, r,
+            bx: c * STEP + 2, by: r * STEP + 2,
+            x: c * STEP + 2,  y: r * STEP + 2,
+            vy: 0, vx: 0, opacity: 0,
+            kept: false, state: 'alive', delay: c * 0.4 + r * 0.3 + Math.random() * 6
+          });
+        }
+      }
+      assignKept(); phase = 'fading-in'; timer = 0;
+    }
+
+    function assignKept() {
+      tokens.forEach(t => t.kept = false);
+      const n = Math.floor(tokens.length * KEEP_RATIO);
+      const idx = Array.from({length: tokens.length}, (_, i) => i).sort(() => Math.random() - 0.5);
+      idx.slice(0, n).forEach(i => tokens[i].kept = true);
+    }
+
+    function startDrop() {
+      tokens.forEach(t => {
+        if (t.kept) return;
+        t.state = 'dropping';
+        t.delay = Math.random() * 55;
+        t.vy = 0.6 + Math.random() * 1.4;
+        t.vx = (Math.random() - 0.5) * 0.4;
+      });
+    }
+
+    function startRefill() {
+      assignKept();
+      tokens.forEach(t => {
+        if (t.kept) return;
+        t.state = 'appearing'; t.opacity = 0;
+        t.y = t.by - 8; t.x = t.bx;
+        t.delay = Math.random() * 55;
+      });
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      pulseT += 0.025; timer++;
+
+      /* phase transitions */
+      if (phase === 'fading-in' && timer > 80 && tokens.every(t => t.opacity > 0.9)) { phase = 'full'; timer = 0; }
+      if (phase === 'full' && timer > 130) { phase = 'dropping'; timer = 0; startDrop(); }
+      if (phase === 'dropping' && timer > 30 && tokens.every(t => t.kept || t.state === 'gone')) { phase = 'sparse'; timer = 0; }
+      if (phase === 'sparse' && timer > 110) { phase = 'refilling'; timer = 0; startRefill(); }
+      if (phase === 'refilling' && timer > 30 && tokens.every(t => t.kept || t.state === 'alive')) { phase = 'full'; timer = 0; tokens.forEach(t => { if (!t.kept) { t.state = 'alive'; t.opacity = 1; t.y = t.by; t.x = t.bx; } }); }
+
+      /* update */
+      tokens.forEach(t => {
+        if (phase === 'fading-in' && t.state === 'alive') {
+          if (timer > t.delay) t.opacity = Math.min(1, t.opacity + 0.035);
+          return;
+        }
+        if (t.state === 'dropping') {
+          if (t.delay > 0) { t.delay--; return; }
+          t.vy *= 1.07; t.y += t.vy; t.x += t.vx;
+          t.opacity = Math.max(0, t.opacity - 0.022);
+          if (t.opacity <= 0) t.state = 'gone';
+        }
+        if (t.state === 'appearing') {
+          if (t.delay > 0) { t.delay--; return; }
+          t.opacity = Math.min(1, t.opacity + 0.028);
+          t.y = Math.min(t.by, t.y + 0.6);
+          if (t.opacity >= 0.98) { t.opacity = 1; t.y = t.by; t.state = 'alive'; }
+        }
+      });
+
+      /* draw */
+      const dark = isDark();
+      tokens.forEach(t => {
+        if (t.opacity < 0.01) return;
+        ctx.save();
+        ctx.globalAlpha = t.opacity;
+
+        if (t.kept) {
+          const pulse = Math.sin(pulseT + t.c * 0.6 + t.r * 0.8) * 0.5 + 0.5;
+          const isSparse = phase === 'sparse' || phase === 'refilling';
+          const glow = isSparse ? 0.35 + pulse * 0.12 : 0.18 + pulse * 0.07;
+          const blur = isSparse ? 5 + pulse * 3 : 2;
+          ctx.shadowColor = dark ? `rgba(232,184,74,${glow})` : `rgba(200,144,26,${glow})`;
+          ctx.shadowBlur = blur;
+          ctx.fillStyle = dark
+            ? `rgba(232,184,74,${0.18 + pulse * 0.09})`
+            : `rgba(200,144,26,${0.14 + pulse * 0.07})`;
+        } else {
+          ctx.fillStyle = dark ? 'rgba(220,180,90,0.04)' : 'rgba(200,150,60,0.05)';
+        }
+
+        const x = t.x, y = t.y, s = CELL, r = 3;
+        ctx.beginPath();
+        ctx.moveTo(x+r,y); ctx.lineTo(x+s-r,y);
+        ctx.arcTo(x+s,y,x+s,y+r,r); ctx.lineTo(x+s,y+s-r);
+        ctx.arcTo(x+s,y+s,x+s-r,y+s,r); ctx.lineTo(x+r,y+s);
+        ctx.arcTo(x,y+s,x,y+s-r,r); ctx.lineTo(x,y+r);
+        ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    window.addEventListener('resize', resize);
+    resize(); animate();
+  })();
+  </script>
 
   <script>
     const btn  = document.getElementById('themeBtn');
